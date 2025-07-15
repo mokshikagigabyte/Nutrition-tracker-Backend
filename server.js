@@ -10,15 +10,21 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// MongoDB Connection
+// ✅ MongoDB Connection
 mongoose.connect(process.env.MONGO_URI)
     .then(() => console.log('✅ MongoDB connected'))
     .catch(err => console.error('❌ MongoDB connection error:', err));
 
-// Routes
+// ✅ ROUTES
+
+// Add this root route 👇
+app.get('/', (req, res) => {
+    res.send('👋 Welcome to the Nutrition Tracker API');
+});
+
 app.use('/recipes', recipeRoutes);
 
-// Register Route
+// Register
 app.post('/register', async (req, res) => {
     try {
         const { name, email, password } = req.body;
@@ -30,7 +36,7 @@ app.post('/register', async (req, res) => {
     }
 });
 
-// Login Route
+// Login
 app.post('/login', async (req, res) => {
     const { email, password } = req.body;
     const user = await User.findOne({ email, password });
@@ -41,6 +47,6 @@ app.post('/login', async (req, res) => {
     }
 });
 
-// Start Server
+// ✅ Start Server
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`🚀 Server running on http://localhost:${PORT}`));
+app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
