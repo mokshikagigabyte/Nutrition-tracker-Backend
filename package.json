@@ -7,14 +7,17 @@
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
-  "author": "",
+  "author": "mokshikagigabyte <mokshika7777@gmail.com>",
   "license": "ISC",
   "type": "commonjs",
   "dependencies": {
+    "axios": "^1.10.0",
     "cors": "^2.8.5",
     "dotenv": "^17.2.0",
     "express": "^5.1.0",
     "mangodb": "^1.0.0",
-    "mongoose": "^8.16.3"
-  }
+    "mongoose": "^8.16.3",
+    "openai": "^5.9.2"
+  },
+  "repository": "https://github.com/mokshikagigabyte/nutrition-tracker-backend.git"
 }
