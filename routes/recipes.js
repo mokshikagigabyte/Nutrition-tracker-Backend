@@ -2,13 +2,14 @@ const express = require('express');
 const axios = require('axios');
 const router = express.Router();
 
-// ✅ POST /recipes — Get recipes from Groq AI
 router.post('/', async (req, res) => {
   const { ingredients } = req.body;
 
-  if (!ingredients || typeof ingredients !== 'string') {
-    return res.status(400).json({ error: 'Invalid or missing ingredients' });
+  if (!ingredients || !Array.isArray(ingredients)) {
+    return res.status(400).json({ error: 'Ingredients must be an array' });
   }
+
+  const ingredientText = ingredients.join(', ');
 
   try {
     const groqResponse = await axios.post(
@@ -18,7 +19,19 @@ router.post('/', async (req, res) => {
         messages: [
           {
             role: 'user',
-            content: `Suggest 3 healthy recipes I can make with these ingredients: ${ingredients}. Include ingredients and simple instructions.`
+            content: `
+You are a recipe suggestion expert. Generate 5 unique and healthy recipes using the following ingredients: ${ingredientText}.
+For each recipe, return in this exact format:
+
+Title: <Recipe Name>
+Ingredients:
+- item 1
+- item 2
+Instructions:
+1. Step one
+2. Step two
+(Use line breaks to separate each recipe)
+`
           }
         ]
       },
@@ -30,16 +43,30 @@ router.post('/', async (req, res) => {
       }
     );
 
-    const aiMessage = groqResponse.data.choices[0].message.content;
+    const aiText = groqResponse.data.choices[0].message.content;
 
-    // Return in structured format if needed
-    res.json([
-      {
-        name: 'AI Suggested Recipes',
-        ingredients: [ingredients],
-        instructions: aiMessage
-      }
-    ]);
+    // Split the text into recipe blocks
+    const recipeBlocks = aiText.split(/Title:\s*/).filter(Boolean);
+
+    const recipes = recipeBlocks.map(block => {
+      const titleMatch = block.match(/^(.+?)\n/);
+      const title = titleMatch ? titleMatch[1].trim() : 'Untitled';
+
+      const ingredientsMatch = block.match(/Ingredients:\s*([\s\S]*?)Instructions:/);
+      const instructionsMatch = block.match(/Instructions:\s*([\s\S]*)/);
+
+      const ingredients = ingredientsMatch
+        ? ingredientsMatch[1].trim().split('\n').map(i => i.replace(/^-/, '').trim())
+        : [];
+
+      const instructions = instructionsMatch
+        ? instructionsMatch[1].trim().split('\n').map(i => i.replace(/^\d+\./, '').trim())
+        : [];
+
+      return { title, ingredients, instructions };
+    });
+
+    res.json({ recipes });
   } catch (error) {
     console.error('Groq API error:', error.response?.data || error.message);
     res.status(500).json({ error: 'Failed to fetch recipes from Groq API' });
