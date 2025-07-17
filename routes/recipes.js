@@ -1,8 +1,14 @@
-// In backend (Node.js Express):
+const express = require('express');
 const axios = require('axios');
+const router = express.Router();
 
-app.post('/recipes', async (req, res) => {
+// ✅ POST /recipes — Get recipes from Groq AI
+router.post('/', async (req, res) => {
   const { ingredients } = req.body;
+
+  if (!ingredients || typeof ingredients !== 'string') {
+    return res.status(400).json({ error: 'Invalid or missing ingredients' });
+  }
 
   try {
     const groqResponse = await axios.post(
@@ -24,11 +30,20 @@ app.post('/recipes', async (req, res) => {
       }
     );
 
-    const content = groqResponse.data.choices[0].message.content;
-    // Parse if needed or just return
-    res.json([{ name: 'Groq AI Recipe', ingredients: [ingredients], instructions: content }]);
-  } catch (err) {
-    console.error('Groq API Error:', err.response?.data || err.message);
-    res.status(500).json({ error: 'Failed to generate recipes' });
+    const aiMessage = groqResponse.data.choices[0].message.content;
+
+    // Return in structured format if needed
+    res.json([
+      {
+        name: 'AI Suggested Recipes',
+        ingredients: [ingredients],
+        instructions: aiMessage
+      }
+    ]);
+  } catch (error) {
+    console.error('Groq API error:', error.response?.data || error.message);
+    res.status(500).json({ error: 'Failed to fetch recipes from Groq API' });
   }
 });
+
+module.exports = router;
